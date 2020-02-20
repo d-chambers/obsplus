@@ -31,9 +31,6 @@ jobs:
           git config --global user.email "donotemailme@example.com"
           git config --global user.name "GithubActions"
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v1
-
       - name: build docs
         shell: bash -l {0}
         run: |
