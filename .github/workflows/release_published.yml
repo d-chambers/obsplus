@@ -71,8 +71,8 @@ jobs:
           rm -rf dist
           python setup.py sdist bdist_wheel
 
-      - name: Publish package to TestPyPI
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+#      - name: Publish to PyPI
+#        uses: pypa/gh-action-pypi-publish@master
+#        with:
+#          user: __token__
+#          password: ${{ secrets.PYPI_TOKEN }}
