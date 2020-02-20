@@ -121,6 +121,7 @@ def _build_index(pages_path, remove_dirty=False):
         remove_dirty_dirs(kwargs)
     # render html, save to disk
     _render_html(kwargs)
+    assert index_path.exists(), f"Failed to create {index_path}!"
 
 
 def _commit_new_docs(pages_path):
