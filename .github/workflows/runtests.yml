@@ -80,7 +80,7 @@ jobs:
       # upload coverage
       - name: upload coverage
         uses: codecov/codecov-action@v1
-        if: (${{ matrix.python-version }} == 3.7) && (${{ matrix.os }} == ubuntu-latest)
+        if: (matrix.python-version == 3.7) && (matrix.os == 'ubuntu-latest')
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
