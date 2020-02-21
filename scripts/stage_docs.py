@@ -159,8 +159,7 @@ def stage_docs(build_path=None, pages_path=None, remove_dirty: bool = False) -> 
     """
     # get paths
     base = Path(__file__).absolute().parent.parent
-    # build_path = Path(make_docs()).parent if build_path is None else build_path
-    build_path = Path("/media/Data/Gits/obsplus/docs/_build")
+    build_path = Path(make_docs()).parent if build_path is None else build_path
     pages_path = Path(pages_path or base.parent / "obsplus_documentation")
     _make_gh_pages_repo(base, pages_path)
     # copy build html directory
