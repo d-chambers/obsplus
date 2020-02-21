@@ -94,7 +94,10 @@ def _build_index(pages_path, remove_dirty=False):
 
     def _create_latest(pages_path, kwargs):
         """ Create the 'latest' version directory. """
-        latest_version = sorted(kwargs["release_versions"])[-1]
+        try:
+            latest_version = sorted(kwargs["release_versions"])[-1]
+        except IndexError:
+            latest_version = sorted(kwargs["non_release_versions"])[-1]
         latest_path = pages_path / "versions" / "latest"
         if latest_path.is_dir():
             shutil.rmtree(latest_path)
@@ -127,7 +130,7 @@ def _build_index(pages_path, remove_dirty=False):
 def _commit_new_docs(pages_path):
     """Commit the new docs, overwrite second commit."""
     # reset to the first commit in gh-pages branch
-    cmd = "git reset --hard `git rev-list --max-parents=0 HEAD | tail -n 1`"
+    cmd = "git reset --soft `git rev-list --max-parents=0 HEAD | tail -n 1`"
     run(cmd, shell=True, stdout=PIPE, stderr=PIPE, check=True, cwd=pages_path)
     # make a commit
     run("git add -A", shell=True, check=True, cwd=pages_path)
