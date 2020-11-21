@@ -1,21 +1,14 @@
 """
 Tests for event schema.
 """
-from pathlib import Path
-from functools import lru_cache
-from typing import Union, Optional, List, Mapping, Dict, Any
+from collections import Sequence
 
-import matplotlib.pyplot as plt
-import numpy as np
-import scipy
-import obsplus
 import obspy
-import pandas as pd
-import pytest
 import obspy.core.event as ev
 
 import obsplus.events.schema as esc
 from obsplus.constants import NSLC
+from obsplus.events.json import cat_to_dict
 
 
 class TestResourceID:
@@ -54,3 +47,46 @@ class TestEvent:
         ev1.comments.append("bob")
         assert "bob" in ev1.comments
         assert not len(ev2.comments)
+
+
+class TestConversions:
+    """Tests for converting ObsPy catalogs to json."""
+
+    def assert_lens_equal(self, obj1, obj2):
+        """
+        Transverse common attributes of obj1 and obj2, assert list-likes
+        are equal.
+        """
+        # check sequences
+        if isinstance(obj1, Sequence):
+            assert isinstance(obj2, Sequence)
+            assert len(obj1) == len(obj2)
+            # recurse
+            for sub1, sub2 in zip(obj1, obj2):
+                self.assert_lens_equal(sub1, sub2)
+        # if working with non sequence
+        else:
+            # get overlapping attributes
+            overlaps = set(dir(obj1)) & set(dir(obj2))
+            for overlap in overlaps:
+                # any attributes which are common and collections check
+                sub1, sub2 = getattr(obj1, overlap), getattr(obj2, overlap)
+                if isinstance(sub1, Sequence):
+                    self.assert_lens_equal(sub1, sub2)
+
+    def test_from_simple_obspy(self):
+        """Test converting from a simple obspy catalog"""
+        event = obspy.read_events()[0]
+        pydantic_event = esc.Event.parse_obj(event)
+        assert isinstance(pydantic_event, esc.Event)
+
+    def test_from_obspy_catalog(self, test_catalog):
+        out = esc.Catalog.from_orm(test_catalog)
+        assert isinstance(out, esc.Catalog)
+        assert len(out.events) == len(test_catalog.events)
+        self.assert_lens_equal(out, test_catalog)
+
+    def test_from_json(self, test_catalog):
+        """Ensure the catalog can be created from json."""
+        catalog_dict = cat_to_dict(test_catalog)
+        out = esc.Catalog.parse_obj(catalog_dict)

@@ -3,6 +3,7 @@ Pydantic schema for ObsPy's event model.
 """
 from datetime import datetime
 from typing import Optional, Dict, Any, List
+from uuid import uuid4
 
 import obspy.core.event as ev
 from pydantic import BaseModel, validator, root_validator
@@ -14,28 +15,20 @@ from obsplus.constants import NSLC
 
 
 data_used_wave_type = Literal[
-    "P waves", "body waves", "surface waves", "mantle waves", "combined", "unknown",
+    "P waves", "body waves", "surface waves", "mantle waves", "combined", "unknown"
 ]
 
-AmplitudeCategory = Literal[
-    "point", "mean", "duration", "period", "integral", "other",
-]
+AmplitudeCategory = Literal["point", "mean", "duration", "period", "integral", "other"]
 
-AmplitudeUnit = Literal[
-    "m", "s", "m/s", "m/(s*s)", "m*s", "dimensionless", "other",
-]
+AmplitudeUnit = Literal["m", "s", "m/s", "m/(s*s)", "m*s", "dimensionless", "other"]
 
 DataUsedWaveType = Literal[
-    "P waves", "body waves", "surface waves", "mantle waves", "combined", "unknown",
+    "P waves", "body waves", "surface waves", "mantle waves", "combined", "unknown"
 ]
 
-EvaluationMode = Literal[
-    "manual", "automatic",
-]
+EvaluationMode = Literal["manual", "automatic"]
 
-EvaluationStatus = Literal[
-    "preliminary", "confirmed", "reviewed", "final", "rejected",
-]
+EvaluationStatus = Literal["preliminary", "confirmed", "reviewed", "final", "rejected"]
 
 EventDescriptionType = Literal[
     "felt report",
@@ -94,17 +87,11 @@ EventType = Literal[
     "volcanic eruption",
 ]
 
-EventTypeCertainty = Literal[
-    "known", "suspected",
-]
+EventTypeCertainty = Literal["known", "suspected"]
 
-MTInversionType = Literal[
-    "general", "zero trace", "double couple",
-]
+MTInversionType = Literal["general", "zero trace", "double couple"]
 
-MomentTensorCategory = Literal[
-    "teleseismic", "regional",
-]
+MomentTensorCategory = Literal["teleseismic", "regional"]
 
 OriginDepthType = Literal[
     "from location",
@@ -127,20 +114,14 @@ OriginType = Literal[
 ]
 
 OriginUncertaintyDescription = Literal[
-    "horizontal uncertainty", "uncertainty ellipse", "confidence ellipsoid",
+    "horizontal uncertainty", "uncertainty ellipse", "confidence ellipsoid"
 ]
 
-PickOnset = Literal[
-    "emergent", "impulsive", "questionable",
-]
+PickOnset = Literal["emergent", "impulsive", "questionable"]
 
-PickPolarity = Literal[
-    "positive", "negative", "undecidable",
-]
+PickPolarity = Literal["positive", "negative", "undecidable"]
 
-SourceTimeFunctionType = Literal[
-    "box car", "triangle", "trapezoid", "unknown",
-]
+SourceTimeFunctionType = Literal["box car", "triangle", "trapezoid", "unknown"]
 
 
 # ----- Type Models
@@ -154,28 +135,30 @@ class _ObsPyModel(BaseModel):
         validate_assignment = True
         arbitrary_types_allowed = True
         orm_mode = True
-        extra = "forbid"
+        extra = "allow"
 
 
 class ResourceIdentifier(_ObsPyModel):
     id: Optional[str] = None
-    referred_object: Optional[Any] = None
-    prefix: Optional[str] = None
-    _base = ev.ResourceIdentifier
 
-    @validator("id", always=True)
-    def get_uuid(cls, value):
+    # referred_object: Optional[Any] = None
+    # prefix: Optional[str] = None
+    # _base = ev.ResourceIdentifier
+
+    @root_validator(pre=True)
+    def get_id(cls, values):
+        value = values.get("id")
         if value is None:
-            value = str(ev.ResourceIdentifier())
-        return value
+            value = str(uuid4())
+        return {"id": value}
 
 
 class _ModelWithResourceID(_ObsPyModel):
     resource_id: Optional[ResourceIdentifier]
 
-    @validator("resource_id", always=True)
-    def get_resource_id(cls, value):
-        return ResourceIdentifier(id=value)
+    # @validator("resource_id", always=True)
+    # def get_resource_id(cls, value):
+    #     return ResourceIdentifier(id=value)
 
 
 class QuantityError(_ObsPyModel):
@@ -219,18 +202,17 @@ class CompositeTime(_ObsPyModel):
     _base = ev.CompositeTime
 
 
-class Comment(_ObsPyModel):
+class Comment(_ModelWithResourceID):
     text: Optional[str] = None
-    resource_id: Optional[ResourceIdentifier] = None
     creation_info: Optional[CreationInfo] = None
     _base = ev.Comment
 
 
 class WaveformStreamID(_ObsPyModel):
-    network_code: Optional["str"] = None
-    station_code: Optional["str"] = None
-    location_code: Optional["str"] = None
-    channel_code: Optional["str"] = None
+    network_code: Optional[str] = None
+    station_code: Optional[str] = None
+    location_code: Optional[str] = None
+    channel_code: Optional[str] = None
     resource_uri: Optional[ResourceIdentifier] = None
     seed_string: Optional[str] = None
     _base = ev.WaveformStreamID
@@ -278,7 +260,7 @@ class DataUsed(_ObsPyModel):
 class StationMagnitude(_ModelWithResourceID):
     origin_id: Optional[ResourceIdentifier] = None
     mag: Optional[float] = None
-    mag_errors: Optional[AttributeError] = None
+    mag_errors: Optional[QuantityError] = None
     station_magnitude_type: Optional[str] = None
     amplitude_id: Optional[ResourceIdentifier] = None
     method_id: Optional[ResourceIdentifier] = None
@@ -296,19 +278,19 @@ class StationMagnitudeContribution(_ObsPyModel):
 
 class Amplitude(_ModelWithResourceID):
     generic_amplitude: Optional[float] = None
-    generic_amplitude_errors: Optional[AttributeError] = None
+    generic_amplitude_errors: Optional[QuantityError] = None
     type: Optional[str] = None
     category: Optional[AmplitudeCategory] = None
     unit: Optional[AmplitudeUnit] = None
     method_id: Optional[ResourceIdentifier] = None
     period: Optional[float] = None
-    period_errors: Optional[AttributeError] = None
+    period_errors: Optional[QuantityError] = None
     snr: Optional[float] = None
     time_window: Optional[TimeWindow] = None
     pick_id: Optional[ResourceIdentifier] = None
     waveform_id: Optional[WaveformStreamID] = None
     scaling_time: Optional[datetime] = None
-    scaling_time_errors: Optional[AttributeError] = None
+    scaling_time_errors: Optional[QuantityError] = None
     magnitude_hint: Optional[str] = None
     evaluation_mode: Optional[EvaluationMode] = None
     evaluation_status: Optional[EvaluationStatus] = None
@@ -346,14 +328,14 @@ class OriginQuality(_ObsPyModel):
 
 class Pick(_ModelWithResourceID):
     time: Optional[datetime] = None
-    time_errors: Optional[AttributeError] = None
+    time_errors: Optional[QuantityError] = None
     waveform_id: Optional[WaveformStreamID] = None
     filter_id: Optional[ResourceIdentifier] = None
     method_id: Optional[ResourceIdentifier] = None
     horizontal_slowness: Optional[float] = None
-    horizontal_slowness_errors: Optional[AttributeError] = None
+    horizontal_slowness_errors: Optional[QuantityError] = None
     backazimuth: Optional[float] = None
-    backazimuth_errors: Optional[AttributeError] = None
+    backazimuth_errors: Optional[QuantityError] = None
     slowness_method_id: Optional[ResourceIdentifier] = None
     onset: Optional[PickOnset] = None
     phase_hint: Optional[str] = None
@@ -372,7 +354,7 @@ class Arrival(_ModelWithResourceID):
     azimuth: Optional[float] = None
     distance: Optional[float] = None
     takeoff_angle: Optional[float] = None
-    takeoff_angle_errors: Optional[AttributeError] = None
+    takeoff_angle_errors: Optional[QuantityError] = None
     time_residual: Optional[float] = None
     horizontal_slowness_residual: Optional[float] = None
     backazimuth_residual: Optional[float] = None
@@ -391,8 +373,8 @@ class Origin(_ModelWithResourceID):
     latitude: Optional[int] = None
     depth: Optional[int] = None
     depth_type: Optional[OriginDepthType] = None
-    time_fixed: bool = False
-    epicenter_fixed: bool = False
+    time_fixed: Optional[bool] = None
+    epicenter_fixed: Optional[bool] = None
     reference_system_id: Optional[ResourceIdentifier] = None
     method_id: Optional[ResourceIdentifier] = None
     earth_model_id: Optional[ResourceIdentifier] = None
@@ -411,7 +393,7 @@ class Origin(_ModelWithResourceID):
 
 class Magnitude(_ModelWithResourceID):
     mag: Optional[float] = None
-    mag_errors: Optional[AttributeError] = None
+    mag_errors: Optional[QuantityError] = None
     magnitude_type: Optional[str] = None
     origin_id: Optional[ResourceIdentifier] = None
     method_id: Optional[ResourceIdentifier] = None
@@ -455,17 +437,17 @@ class PrincipalAxes(_ObsPyModel):
 
 class Tensor(_ObsPyModel):
     m_rr: Optional[float] = None
-    m_rr_errors: Optional[AttributeError] = None
+    m_rr_errors: Optional[QuantityError] = None
     m_tt: Optional[float] = None
-    m_tt_errors: Optional[AttributeError] = None
+    m_tt_errors: Optional[QuantityError] = None
     m_pp: Optional[float] = None
-    m_pp_errors: Optional[AttributeError] = None
+    m_pp_errors: Optional[QuantityError] = None
     m_rt: Optional[float] = None
-    m_rt_errors: Optional[AttributeError] = None
+    m_rt_errors: Optional[QuantityError] = None
     m_rp: Optional[float] = None
-    m_rp_errors: Optional[AttributeError] = None
+    m_rp_errors: Optional[QuantityError] = None
     m_tp: Optional[float] = None
-    m_tp_errors: Optional[AttributeError] = None
+    m_tp_errors: Optional[QuantityError] = None
 
 
 class SourceTimeFunction(_ObsPyModel):
@@ -479,7 +461,7 @@ class MomentTensor(_ModelWithResourceID):
     derived_origin_id: Optional[ResourceIdentifier] = None
     moment_magnitude_id: Optional[ResourceIdentifier] = None
     scalar_moment: Optional[float] = None
-    scalar_moment_errors: Optional[AttributeError] = None
+    scalar_moment_errors: Optional[QuantityError] = None
     tensor: Optional[Tensor] = None
     variance: Optional[float] = None
     variance_reduction: Optional[float] = None
@@ -537,3 +519,12 @@ class Event(_ModelWithResourceID):
     origins: List[Origin] = []
     magnitudes: List[Magnitude] = []
     station_magnitudes: List[StationMagnitude] = []
+
+
+class Catalog(_ModelWithResourceID):
+    """A collection of events."""
+
+    events: List[Event] = []
+    description: Optional[str] = None
+    comments: Optional[List[Comment]] = None
+    creation_info: Optional[CreationInfo] = None
