@@ -12,7 +12,10 @@ from obsplus.events.json import cat_to_dict
 
 
 class TestResourceID:
+    """Tests for the resource ID"""
+
     def test_null(self):
+        """Ensure Null generates a resource ID a la ObsPy"""
         rid = esc.ResourceIdentifier()
         assert isinstance(rid.id, str)
         assert len(rid.id)
@@ -25,7 +28,10 @@ class TestResourceID:
 
 
 class TestWaveformID:
+    """Test the waveform id object"""
+
     def test_seed_id(self):
+        """Ensure the seed id is valid."""
         seed_id = "UU.TMU.01.HHZ"
         out = esc.WaveformStreamID(seed_string=seed_id)
         for name, value in zip(NSLC, seed_id.split(".")):
@@ -33,6 +39,8 @@ class TestWaveformID:
 
 
 class TestEvent:
+    """Test for event model."""
+
     def test_resource_id(self):
         """Ensure the ResourceID gets created."""
         out = esc.Event()
@@ -58,7 +66,7 @@ class TestConversions:
         are equal.
         """
         # check sequences
-        if isinstance(obj1, Sequence):
+        if isinstance(obj1, Sequence) and not isinstance(obj1, str):
             assert isinstance(obj2, Sequence)
             assert len(obj1) == len(obj2)
             # recurse
@@ -68,7 +76,7 @@ class TestConversions:
         else:
             # get overlapping attributes
             overlaps = set(dir(obj1)) & set(dir(obj2))
-            for overlap in overlaps:
+            for overlap in {x for x in overlaps if not x.startswith("_")}:
                 # any attributes which are common and collections check
                 sub1, sub2 = getattr(obj1, overlap), getattr(obj2, overlap)
                 if isinstance(sub1, Sequence):
@@ -81,6 +89,7 @@ class TestConversions:
         assert isinstance(pydantic_event, esc.Event)
 
     def test_from_obspy_catalog(self, test_catalog):
+        """Ensure pydantic models can be generated from Obspy objects"""
         out = esc.Catalog.from_orm(test_catalog)
         assert isinstance(out, esc.Catalog)
         assert len(out.events) == len(test_catalog.events)
@@ -90,3 +99,11 @@ class TestConversions:
         """Ensure the catalog can be created from json."""
         catalog_dict = cat_to_dict(test_catalog)
         out = esc.Catalog.parse_obj(catalog_dict)
+        assert isinstance(out, esc.Catalog)
+        assert len(out.events) == len(catalog_dict["events"])
+
+    def test_round_trip(self, test_catalog):
+        """Test converting from pydantic models to ObsPy."""
+        pycat = esc.Catalog.from_orm(test_catalog)
+        out = pycat.to_obspy()
+        assert out == test_catalog
