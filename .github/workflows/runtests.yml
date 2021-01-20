@@ -96,4 +96,4 @@ jobs:
 # This is a very useful step for debugging, it allows you to ssh into the CI
 # machine (https://github.com/marketplace/actions/debugging-with-tmate)
 #- name: Setup tmate session
-#  uses: mxschmitt/action-tmate@v1
+#  uses: mxschmitt/action-tmate@v3
