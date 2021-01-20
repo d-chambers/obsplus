@@ -5,4 +5,4 @@ progressbar2
 pydantic
 scipy
 tables
-typing_extentions
+typing-extensions
