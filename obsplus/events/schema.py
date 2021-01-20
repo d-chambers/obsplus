@@ -264,13 +264,6 @@ class WaveformStreamID(_ObsPyModel):
     resource_uri: Optional[ResourceIdentifier] = None
     seed_string: Optional[str] = None
 
-    # @root_validator("seed_string")
-    # def validate_seed_str(cls, value):
-    #     """Ensure the seed string has 4 elements separated by ."""
-    #     split = value.split(".")
-    #     assert len(split) == 4
-    #     return value
-
     @root_validator()
     def parse_seed_id(cls, values):
         """Parse seed IDs if needed."""
