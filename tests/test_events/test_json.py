@@ -47,9 +47,18 @@ class TestCat2Json:
     def json_cat_from_disk(self, cat_from_json):
         """ save the json events to disk and read it again into memory """
         tf = tempfile.mkstemp()
-        cat_from_json = obspy.Catalog(cat_from_json)
-        cat_from_json.write(tf[1], "quakeml")
+        new_cat_from_json = cat_from_json
+        new_cat_from_json.write(tf[1], "quakeml")
         cat = obspy.read_events(tf[1])
+
+        # if not new_cat_from_json == cat:
+        #     breakpoint()
+        #     new_cat_from_json == cat
+        #     tf = tempfile.mkstemp()
+        #     new_cat_from_json = obspy.Catalog(new_cat_from_json)
+        #     new_cat_from_json.write(tf[1], "quakeml")
+        #     cat = obspy.read_events(tf[1])
+
         return cat
 
     # tests

@@ -239,6 +239,13 @@ class CompositeTime(_ObsPyModel):
     second: Optional[float]
     second_errors: Optional[QuantityError]
 
+    @root_validator()
+    def get_resource_id(cls, value):
+        """Ensure a valid str is returned. """
+        if value is None:
+            return str(uuid4())
+        return value
+
 
 class Comment(_ModelWithResourceID):
     """Comment"""
@@ -257,19 +264,23 @@ class WaveformStreamID(_ObsPyModel):
     resource_uri: Optional[ResourceIdentifier] = None
     seed_string: Optional[str] = None
 
-    @validator("seed_string")
-    def validate_seed_str(cls, value):
-        """Ensure the seed string has 4 elements separated by ."""
-        split = value.split(".")
-        assert len(split) == 4
-        return value
+    # @root_validator("seed_string")
+    # def validate_seed_str(cls, value):
+    #     """Ensure the seed string has 4 elements separated by ."""
+    #     split = value.split(".")
+    #     assert len(split) == 4
+    #     return value
 
     @root_validator()
     def parse_seed_id(cls, values):
         """Parse seed IDs if needed."""
         seed_str = values.get("seed_string", None)
+        # need to add seed_str
         if not seed_str:
+            seed = ".".join([values[f"{x}_code"] for x in NSLC])
+            values["seed_str"] = seed
             return values
+        # need to get other codes from seed_str
         split = seed_str.split(".")
         for code, name in zip(split, NSLC):
             values[f"{name}_code"] = code
@@ -311,7 +322,6 @@ class StationMagnitude(_ModelWithResourceID):
     method_id: Optional[ResourceIdentifier] = None
     waveform_id: Optional[WaveformStreamID] = None
     creation_info: Optional[CreationInfo] = None
-
     comments: List[Comment] = []
 
 
